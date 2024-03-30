@@ -1,0 +1,12 @@
+---
+ban-default-cmds:
+  banir: true
+  cmds:
+    - kill
+    - me
+    - pl
+    - plugins
+    - handlers
+    - handlersbyplugin
+    - clear
+...

@@ -1,0 +1,4 @@
+name: Utilidades
+version: 1.0.0
+main: UtilityLoader
+api: [5.0.0, 4.0.0]
