@@ -31,15 +31,16 @@ class WorldUtils
 
         return $manager->getWorldByName($name);
     }
-    static public function safeTeleport(World $mundo, \pocketmine\math\Vector3 $local, Entity $entity): void
+    static public function safeTeleport(Location $local, Entity $entity): void
     {
+        $mundo = $local->getWorld();
         if(!$mundo->isLoaded()) return;
         if(!$mundo->isChunkLoaded($local->getFloorX(), $local->getFloorZ()))
             $mundo->loadChunk($local->getFloorX(), $local->getFloorZ());
 
 //        $y = $mundo->getHighestBlockAt($local->getFloorX(), $local->getFloorZ());
-        $up = new Location($local->getX(), $local->getY() + 2, $local->getFloorZ(), $mundo, 0, 0);
-        $entity->teleport($up);
+
+        $entity->teleport($local);
     }
 
     public static function removeWorld(string $name): int {

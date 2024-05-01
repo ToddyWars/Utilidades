@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace IvanCraft623\fakeblocks;
 
-use czechpmdevs\multiworld\libs\CortexPE\Commando\libs\muqsit\simplepackethandler\SimplePacketHandler;
 use Exception;
+use muqsit\simplepackethandler\SimplePacketHandler;
 use pocketmine\block\Block;
 use pocketmine\event\EventPriority;
 use pocketmine\event\Listener;
@@ -43,10 +43,7 @@ final class FakeBlockManager implements Listener {
 		return self::$isRegistered;
 	}
 
-    /**
-     * @throws Exception
-     */
-    public static function register(PluginBase $registrant) : void {
+	public static function register(PluginBase $registrant) : void {
 		if (self::$isRegistered) {
 			throw new Exception("FakeBlock listener is already registered by another plugin.");
 		}
@@ -72,9 +69,9 @@ final class FakeBlockManager implements Listener {
 		});
 	}
 
-	public function create(Block $block, Position $position) : FakeBlock {
+	public function create(Block $block, Position $position, int $layer = 0) : FakeBlock {
 		$pos = Position::fromObject($position->floor(), $position->getWorld());
-		$fakeblock = new FakeBlock($block, $pos);
+		$fakeblock = new FakeBlock($block, $pos, $layer);
 		$chunkHash = World::chunkHash($pos->getFloorX() >> Chunk::COORD_BIT_SIZE, $pos->getFloorZ() >> Chunk::COORD_BIT_SIZE);
 		$this->fakeblocks[spl_object_id($pos->getWorld())][$chunkHash][spl_object_id($fakeblock)] = $fakeblock;
 		return $fakeblock;
@@ -134,7 +131,7 @@ final class FakeBlockManager implements Listener {
 				$blockPosition,
 				$blockTranslator->internalIdToNetworkId($stateId),
 				UpdateBlockPacket::FLAG_NETWORK,
-				UpdateBlockPacket::DATA_LAYER_NORMAL
+				$b->getLayer()
 			);
 		}
 

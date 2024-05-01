@@ -15,15 +15,25 @@ class FakeBlock {
 	 * @var array<int, Player>
 	 */
 	protected array $viewers = [];
+	protected int $layer;
 
 	/**
 	 * @var array<int, Player>
 	 */
 	protected array $blockUpdatePacketQueue = [];
 
-	public function __construct(protected Block $block, Position $pos) {
+	public function __construct(protected Block $block, Position $pos, int $layer = 0) {
 		$block->position($pos->getWorld(), (int) $pos->x,  (int) $pos->y,  (int) $pos->z);
+        $this->layer = $layer;
 	}
+
+    /**
+     * @return int
+     */
+    public function getLayer(): int
+    {
+        return $this->layer;
+    }
 
 	public function getBlock() : Block {
 		return $this->block;
@@ -40,20 +50,6 @@ class FakeBlock {
 	public function isViewer(Player $player) : bool {
 		return isset($this->viewers[$player->getId()]);
 	}
-
-    public function addViewers(array $players):void
-    {
-        foreach ($players as $player){
-            $this->addViewer($player);
-        }
-    }
-
-    public function removeViewers(array $players):void
-    {
-        foreach ($players as $player){
-            if($this->isViewer($player))$this->removeViewer($player);
-        }
-    }
 
 	public function addViewer(Player $player) : void {
 		$this->viewers[$player->getId()] = $player;

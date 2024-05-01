@@ -12,21 +12,30 @@ use pocketmine\network\mcpe\protocol\RemoveActorPacket;
 use pocketmine\network\mcpe\protocol\types\entity\ByteMetadataProperty;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
+use pocketmine\network\mcpe\protocol\types\entity\IntMetadataProperty;
 use pocketmine\network\mcpe\protocol\types\entity\PropertySyncData;
 use pocketmine\network\mcpe\protocol\types\entity\StringMetadataProperty;
 use pocketmine\player\Player;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Utils;
+use Pokemon\data\PokeData;
 use ref\libNpcDialogue\event\DialogueNameChangeEvent;
 use ref\libNpcDialogue\form\NpcDialogueButtonData;
+use Serializable;
 use function array_key_exists;
 use function array_map;
 use function json_encode;
 use function trim;
 
-final class NpcDialogue{
+final class NpcDialogue implements Serializable {
+    private mixed $closure;
 
-	protected ?int $actorId = null;
+    public function __construct()
+    {
+        $this->closure = $this;
+    }
+
+    protected ?int $actorId = null;
 
 	protected bool $fakeActor = true;
 
@@ -56,7 +65,7 @@ final class NpcDialogue{
 	 */
 	private int $pickerOffset = -50;
 
-	public function setSceneName(string $sceneName) : void{
+    public function setSceneName(string $sceneName) : void{
 		if(trim($sceneName) === ""){
 			throw new \InvalidArgumentException("Scene name cannot be empty");
 		}
@@ -71,7 +80,7 @@ final class NpcDialogue{
 		$this->dialogueBody = $dialogueBody;
 	}
 
-	public function sendTo(Player $player, ?Entity $entity = null) : void{
+	public function sendTo(Player $player, null|PokeData|Entity $entity = null) : void{
 		if(trim($this->sceneName) === ""){
 			throw new \InvalidArgumentException("Scene name cannot be empty");
 		}
@@ -85,43 +94,62 @@ final class NpcDialogue{
 				"scale" => [1, 1, 1],
 				"translate" => [0, $this->pickerOffset, 0]
 			]
+            /*,
+            "skin_list" => [
+                [
+                    "variant" => 0
+                ],
+                [
+                    "variant" => 1
+                ]
+                ,
+                [
+                    "variant" => 2
+                ]
+            ]*/
 		];
-		if($entity === null){
-			$this->actorId = Entity::nextRuntimeId();
-			$player->getNetworkSession()->sendDataPacket(
-				AddActorPacket::create(
-					$this->actorId,
-					$this->actorId,
-					EntityIds::NPC,
-					$player->getPosition()->add(0, 10, 0),
-					null,
-					$player->getLocation()->getPitch(),
-					$player->getLocation()->getYaw(),
-					$player->getLocation()->getYaw(),
-					$player->getLocation()->getYaw(),
-					[],
-					[
-						EntityMetadataProperties::HAS_NPC_COMPONENT => new ByteMetadataProperty(1),
-						EntityMetadataProperties::INTERACTIVE_TAG => new StringMetadataProperty($this->dialogueBody),
-						EntityMetadataProperties::NPC_ACTIONS => new StringMetadataProperty($mappedActions),
-						// EntityMetadataProperties::VARIANT => new IntMetadataProperty(0), // Variant affects NPC skin
-					],
-					new PropertySyncData([], []),
-					[]
-				)
-			);
-		}else{
-			$this->actorId = $entity->getId();
-			$this->fakeActor = false;
-			$propertyManager = $entity->getNetworkProperties();
-			$propertyManager->setByte(EntityMetadataProperties::HAS_NPC_COMPONENT, 1);
-			$propertyManager->setString(EntityMetadataProperties::INTERACTIVE_TAG, $this->dialogueBody);
-			$propertyManager->setString(EntityMetadataProperties::NPC_ACTIONS, $mappedActions);
-			if($entity instanceof Human){
-				// This is a workaround for Human NPC
-				$propertyManager->setString(EntityMetadataProperties::NPC_SKIN_INDEX, Utils::assumeNotFalse(json_encode($skinIndex)));
-			}
-		}
+        if($entity instanceof Entity) {
+            $this->actorId = $entity->getId();
+            $this->fakeActor = false;
+            $propertyManager = $entity->getNetworkProperties();
+            $propertyManager->setByte(EntityMetadataProperties::HAS_NPC_COMPONENT, 1);
+            $propertyManager->setString(EntityMetadataProperties::INTERACTIVE_TAG, $this->dialogueBody);
+            $propertyManager->setString(EntityMetadataProperties::NPC_ACTIONS, $mappedActions);
+            if ($entity instanceof Human) {
+                // This is a workaround for Human NPC
+                $propertyManager->setString(EntityMetadataProperties::NPC_SKIN_INDEX, Utils::assumeNotFalse(json_encode($skinIndex)));
+            }
+        }else{
+            $this->actorId = Entity::nextRuntimeId();
+            $identifier = EntityIds::NPC;
+            $variant = 0;
+            if($entity instanceof PokeData){
+                $identifier = "pokemon:".strtolower($entity->getName());
+                $variant = $entity->isShiny();
+            }
+            $player->getNetworkSession()->sendDataPacket(
+                AddActorPacket::create(
+                    $this->actorId,
+                    $this->actorId,
+                    $identifier,
+                    $player->getPosition()->add(0, 10, 0),
+                    null,
+                    $player->getLocation()->getPitch(),
+                    $player->getLocation()->getYaw(),
+                    $player->getLocation()->getYaw(),
+                    $player->getLocation()->getYaw(),
+                    [],
+                    [
+                        EntityMetadataProperties::HAS_NPC_COMPONENT => new ByteMetadataProperty(1),
+                        EntityMetadataProperties::INTERACTIVE_TAG => new StringMetadataProperty($this->dialogueBody),
+                        EntityMetadataProperties::NPC_ACTIONS => new StringMetadataProperty($mappedActions),
+                        EntityMetadataProperties::SKIN_ID => new IntMetadataProperty($variant), // Variant affects NPC skin
+                    ],
+                    new PropertySyncData([], []),
+                    []
+                )
+            );
+        }
 		$pk = NpcDialoguePacket::create(
 			$this->actorId,
 			NpcDialoguePacket::ACTION_OPEN,
@@ -193,4 +221,36 @@ final class NpcDialogue{
 	public function setPickerOffset(int $offset) : void{
 		$this->pickerOffset = $offset;
 	}
+
+
+    public function serialize(): ?string
+    {
+        return serialize($this);
+    }
+
+    public function unserialize($data): void
+    {
+        $this->closure = unserialize($data);
+    }
+
+    public function __serialize(): array {
+        return ['closure' => $this->closure];
+    }
+
+    public function __unserialize(array $data): void {
+        $this->closure = $data['closure'];
+    }
+
+    /**
+     * @param mixed $closure
+     */
+    public function setClosure(mixed $closure): void
+    {
+        $this->closure = $closure;
+    }
+
+    public function getClosure(): mixed
+    {
+        return $this->closure;
+    }
 }

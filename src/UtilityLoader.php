@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use IvanCraft623\fakeblocks\FakeBlockManager;
+use CameraAPI\CameraHandler;
 use muqsit\invmenu\InvMenuHandler;
 use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
@@ -21,9 +21,7 @@ class UtilityLoader extends PluginBase{
     {
         if(!libNpcDialogue::isRegistered()) libNpcDialogue::register($this);
         if(!InvMenuHandler::isRegistered()) InvMenuHandler::register($this);
-        if (!FakeBlockManager::isRegistered()) {
-            FakeBlockManager::register($this);
-        }
+        if(!CameraHandler::isRegistered()) CameraHandler::register($this);
         self::$instance = $this;
         $this->unreg();
         $this->getServer()->getPluginManager()->registerEvents(new UtilityListener(), $this);
