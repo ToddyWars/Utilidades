@@ -67,9 +67,6 @@ class Scoreboard
 		if(!isset($this->scoreboards[$player->getName()])){
             throw new Exception("Cannot set a score to a player with no scoreboard");
 		}
-		if($score > 15 || $score < 0){
-            throw new Exception("Score must be between the value of 1-15. $score out of range");
-		}
 		$objectiveName = $this->getObjectiveName($player);
 		$entry = new ScorePacketEntry();
 		$entry->objectiveName = $objectiveName;

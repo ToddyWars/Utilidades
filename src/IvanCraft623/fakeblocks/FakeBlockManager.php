@@ -43,7 +43,7 @@ final class FakeBlockManager implements Listener {
 		return self::$isRegistered;
 	}
 
-	public static function register(PluginBase $registrant) : void {
+	public static function register(PluginBase $registraEnt) : void {
 		if (self::$isRegistered) {
 			throw new Exception("FakeBlock listener is already registered by another plugin.");
 		}
