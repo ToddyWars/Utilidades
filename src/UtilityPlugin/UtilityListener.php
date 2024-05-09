@@ -9,7 +9,7 @@ use ref\libNpcDialogue\NpcDialogue;
 
 class UtilityListener implements Listener{
 
-    public function onJoin(PlayerJoinEvent $event): void
+    public function __onJoin(PlayerJoinEvent $event): void
     {
         $this->show($event->getPlayer());
     }

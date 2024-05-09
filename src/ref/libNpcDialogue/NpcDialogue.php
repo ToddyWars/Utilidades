@@ -113,7 +113,6 @@ final class NpcDialogue implements Serializable {
             $this->fakeActor = false;
             $propertyManager = $entity->getNetworkProperties();
             $propertyManager->setByte(EntityMetadataProperties::HAS_NPC_COMPONENT, 1);
-            $propertyManager->setString(EntityMetadataProperties::INTERACTIVE_TAG, $this->dialogueBody);
             $propertyManager->setString(EntityMetadataProperties::NPC_ACTIONS, $mappedActions);
             if ($entity instanceof Human) {
                 // This is a workaround for Human NPC
@@ -141,7 +140,6 @@ final class NpcDialogue implements Serializable {
                     [],
                     [
                         EntityMetadataProperties::HAS_NPC_COMPONENT => new ByteMetadataProperty(1),
-                        EntityMetadataProperties::INTERACTIVE_TAG => new StringMetadataProperty($this->dialogueBody),
                         EntityMetadataProperties::NPC_ACTIONS => new StringMetadataProperty($mappedActions),
                         EntityMetadataProperties::SKIN_ID => new IntMetadataProperty($variant), // Variant affects NPC skin
                     ],
